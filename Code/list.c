@@ -84,56 +84,129 @@ void list_delete(ptrList* l) {
 /*-----------------------------------------------------------------*/
 
 List* list_push_front(List* l, int v) {
-	(void)v;
+	LinkedElement* sentinel = l->sentinel;
+	LinkedElement* new_head = malloc(sizeof(LinkedElement));
+	new_head->value = v;
+	if (sentinel->next == sentinel) // list is empty
+	{
+		sentinel->next = new_head;
+		sentinel ->previous = new_head;
+		new_head->next = sentinel;
+		new_head->previous = sentinel;
+	}else{
+		LinkedElement* list_head = sentinel->next;
+		sentinel->next = new_head;
+		list_head->previous = new_head;
+		new_head->next = list_head;
+		new_head->previous = sentinel;
+	}
+	l->size+=1;
 	return l;
+	
 }
 
 /*-----------------------------------------------------------------*/
 
 int list_front(const List* l) {
-	(void)l;
-	return 0;
+	LinkedElement* sentinel = l->sentinel;
+	return (sentinel->next)->value;
 }
 
 /*-----------------------------------------------------------------*/
 
 int list_back(const List* l) {
-	(void)l;
-	return 0;
+	LinkedElement* sentinel = l->sentinel;
+	return (sentinel->previous)->value;
 }
 
 /*-----------------------------------------------------------------*/
 
 List* list_pop_front(List* l) {
+	LinkedElement* sentinel = l->sentinel;
+	LinkedElement*old_head = sentinel->next;
+	LinkedElement*new_head = old_head->next;
+	sentinel->next = new_head;
+	new_head->previous = sentinel;
+	free(old_head);
 	return l;
 }
 
 /*-----------------------------------------------------------------*/
 
 List* list_pop_back(List* l){
+	LinkedElement* sentinel = l->sentinel;
+	LinkedElement*old_tail = sentinel->previous;
+	LinkedElement*new_tail = old_tail->previous;
+	sentinel->previous = new_tail;
+	new_tail->next = sentinel;
+	free(old_tail);
 	return l;
 }
 
 /*-----------------------------------------------------------------*/
 
 List* list_insert_at(List* l, int p, int v) {
-	(void)v;
-	(void)p;
+	LinkedElement* new_node = malloc(sizeof(LinkedElement));
+	new_node->value = v;
+	LinkedElement*sentinel = l->sentinel;
+	LinkedElement*current_node = sentinel;
+	int pos = 0;
+	while(pos < p){
+		current_node = current_node->next;
+		pos++;
+	}
+	// rewire the nodes
+	LinkedElement* next_node = current_node->next;
+	current_node->next = new_node;
+	next_node->previous = new_node;
+	new_node->previous = current_node;
+	new_node->next =next_node;
+	// increase the size
+	l->size += 1;
 	return l;
+
 }
 
 /*-----------------------------------------------------------------*/
 
+int printMyList(int i, void* env){
+	fprintf((FILE*)env, "%d ", i);
+	return i;
+}
+
 List* list_remove_at(List* l, int p) {
-	(void)p;
+	LinkedElement*sentinel = l->sentinel;
+	LinkedElement*node_to_remove = sentinel;
+	int pos = 0;
+	while(pos <= p){
+		node_to_remove = node_to_remove->next;
+		pos++;
+	}
+	// rewire the nodes
+	LinkedElement* prev_node_to_remove = node_to_remove->previous;
+	LinkedElement* next_node_to_remove = node_to_remove->next;
+	prev_node_to_remove->next = next_node_to_remove;
+	next_node_to_remove->previous = prev_node_to_remove;
+	// increase the size
+	l ->size -=1;
+	//printf("remove %i  at position %i\n", node_to_remove->value, pos-1);
+	//printf(" New List : ");
+	//list_map(l, printMyList, stdout);
+	//printf("\n");
+	free(node_to_remove); 
 	return l;
 }
 
 /*-----------------------------------------------------------------*/
 
 int list_at(const List* l, int p) {
-	(void)l;
-	return p;
+	LinkedElement* current_node = l->sentinel->next;
+	int pos = 0;
+	while(pos < p){
+		current_node = current_node->next;
+		pos++;
+	}
+	return current_node->value;
 }
 
 /*-----------------------------------------------------------------*/
