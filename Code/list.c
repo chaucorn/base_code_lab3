@@ -27,6 +27,12 @@ struct s_List {
 	int size;
 };
 
+/*Struct SubList minimal representation of a linked list*/
+struct s_SubList {
+	LinkedElement* list_head;
+	LinkedElement* list_tail;
+};
+
 
 /*-----------------------------------------------------------------*/
 
@@ -169,10 +175,6 @@ List* list_insert_at(List* l, int p, int v) {
 
 /*-----------------------------------------------------------------*/
 
-int printMyList(int i, void* env){
-	fprintf((FILE*)env, "%d ", i);
-	return i;
-}
 
 List* list_remove_at(List* l, int p) {
 	LinkedElement*sentinel = l->sentinel;
@@ -189,10 +191,6 @@ List* list_remove_at(List* l, int p) {
 	next_node_to_remove->previous = prev_node_to_remove;
 	// increase the size
 	l ->size -=1;
-	//printf("remove %i  at position %i\n", node_to_remove->value, pos-1);
-	//printf(" New List : ");
-	//list_map(l, printMyList, stdout);
-	//printf("\n");
 	free(node_to_remove); 
 	return l;
 }
@@ -233,6 +231,8 @@ List* list_map(List* l, ListFunctor f, void* environment) {
 	
 }
 
+
+
 /*-----------------------------------------------------------------*/
 
 List* list_sort(List* l, OrderFunctor f) {
@@ -240,3 +240,9 @@ List* list_sort(List* l, OrderFunctor f) {
 	return l;
 }
 
+/*-----------------------------------------------------------------*/
+
+SubList list_split(SubList l){
+	LinkedElement* slow_pointer;
+	LinkedElement* fast
+}

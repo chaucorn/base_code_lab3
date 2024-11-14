@@ -29,6 +29,7 @@ typedef struct s_List List;
 */
 typedef List* ptrList;
 /** @}*/
+typedef struct s_SubList SubList;
 
 /*-----------------------------------------------------------------*/
 
