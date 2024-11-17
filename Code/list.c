@@ -13,6 +13,9 @@
 
 #include "list.h"
 
+
+SubList list_mergesort(SubList l, OrderFunctor f);
+
 typedef struct s_LinkedElement {
 	int value;
 	struct s_LinkedElement* previous;
@@ -31,8 +34,7 @@ struct s_List {
 struct s_SubList {
 	LinkedElement* list_head;
 	LinkedElement* list_tail;
-};
-
+}; 
 
 /*-----------------------------------------------------------------*/
 
@@ -82,9 +84,8 @@ void list_delete(ptrList* l) {
 		toDelete = toDelete->next;
 		free(f);
 	}
-	free(sentinel); // free the sentinel struct itself ??
 	free(*l);
-	*l = NULL;
+
 }
 
 /*-----------------------------------------------------------------*/
@@ -226,23 +227,149 @@ List* list_map(List* l, ListFunctor f, void* environment) {
 	for (LinkedElement* element = sentinel->next; element != sentinel; element = element->next){
 		f(element->value, environment);
 	} 
-
 	return l;
-	
 }
-
 
 
 /*-----------------------------------------------------------------*/
 
 List* list_sort(List* l, OrderFunctor f) {
-	(void)f;
+	LinkedElement* sentinel = l->sentinel;
+	SubList my_sublist;
+	my_sublist.list_head = sentinel->next;
+	my_sublist.list_tail = sentinel->previous;
+
+	//cut the link with sentinel
+	sentinel->next->previous = NULL;
+	sentinel->previous->next = NULL;
+	sentinel->next = NULL;
+	sentinel->previous = NULL;
+	my_sublist = list_mergesort(my_sublist, f);
+	printf("received my sorted list\n");
+	sentinel->next = my_sublist.list_head;
+	(sentinel->next)->previous = sentinel;
+	sentinel->previous = my_sublist.list_tail;
+	(sentinel->previous)->next = sentinel;
+	printf("finished sorting the list!\n");
 	return l;
 }
 
 /*-----------------------------------------------------------------*/
 
 SubList list_split(SubList l){
-	LinkedElement* slow_pointer;
-	LinkedElement* fast
+	SubList splitted_list;
+	LinkedElement* slow_pointer = l.list_head;
+	LinkedElement* fast_pointer = l.list_head;
+
+	if (l.list_head == l.list_tail)
+	{
+		return splitted_list;
+	}
+
+	while(fast_pointer != l.list_tail && fast_pointer->next != l.list_tail){
+		slow_pointer = slow_pointer->next;
+		fast_pointer = fast_pointer->next->next;
+	}
+	
+	splitted_list.list_head = slow_pointer;
+	splitted_list.list_tail =slow_pointer->next;
+	slow_pointer->next = NULL;
+	return splitted_list;
 }
+
+SubList list_merge(SubList leftlist, SubList rightlist, OrderFunctor f){
+	SubList merged_list;
+	LinkedElement* tail_list_itr = NULL;
+	LinkedElement* leftlist_itr = leftlist.list_head;
+	LinkedElement* rightlist_itr = rightlist.list_head;
+	/*
+	printf("BEFORE MERGE:\n");
+    if (leftlist.list_head && leftlist.list_tail) {
+        printf("leftlist head %i leftlist tail %i\n", leftlist.list_head->value, leftlist.list_tail->value);
+    } else {
+        printf("leftlist is empty\n");
+    }
+    if (rightlist.list_head && rightlist.list_tail) {
+        printf("rightlist head %i rightlist tail %i\n", rightlist.list_head->value, rightlist.list_tail->value);
+    } else {
+        printf("rightlist is empty\n");
+    }
+	*/
+	// find the head of merged list:
+	if (f(leftlist_itr->value, rightlist_itr->value)){
+		merged_list.list_head = leftlist_itr;
+		leftlist_itr = leftlist_itr->next;
+	}
+	else{
+		merged_list.list_head = rightlist_itr;
+		rightlist_itr = rightlist_itr->next;
+	}
+	// Point the tail iterator to the head
+	tail_list_itr = merged_list.list_head;
+	
+	// need to make sure that the last element point to NULL 
+	while (leftlist_itr!= NULL && rightlist_itr!= NULL){
+		if (f(leftlist_itr->value, rightlist_itr->value)){
+			//bind the tail and its next element
+			tail_list_itr->next = leftlist_itr;
+			leftlist_itr->previous = tail_list_itr;
+			//update the list tail
+			tail_list_itr = leftlist_itr;
+			// update, point the element to its next element
+			leftlist_itr = leftlist_itr->next;
+		}else{
+			tail_list_itr->next = rightlist_itr;
+			rightlist_itr->previous = tail_list_itr;
+			tail_list_itr = rightlist_itr;
+			// update, point the element to its next element
+			rightlist_itr = rightlist_itr->next;
+		}
+	} 
+	tail_list_itr->next = (leftlist_itr!= NULL)?leftlist_itr:rightlist_itr;
+	tail_list_itr = tail_list_itr->next;
+	while (tail_list_itr->next)
+	{
+		tail_list_itr= tail_list_itr->next;
+	}
+	
+	merged_list.list_tail = tail_list_itr;
+	/*printf("AFTER MERGE\n");
+	printf("merged list head %i merged list tail %i\n", merged_list.list_head->value, merged_list.list_tail->value);
+	printf("my list is: ");
+	LinkedElement* element = merged_list.list_head;
+	while (element != NULL)
+	{
+		printf(" %i ", element->value);
+		
+		element = element->next;
+	}
+
+	printf("\nfinish printing\n");
+	*/
+	return merged_list;
+}
+
+SubList list_mergesort(SubList l, OrderFunctor f){
+	if (l.list_head == l.list_tail){
+		return l;
+	}else{
+		// split the list into 2 sublist
+		SubList splitted_list = list_split(l);
+		SubList rightlist;
+		SubList leftlist;
+		leftlist.list_head = l.list_head;
+		leftlist.list_tail = splitted_list.list_head;
+		rightlist.list_head = splitted_list.list_tail;
+		rightlist.list_tail = l.list_tail; 
+
+		// 2 recursive calls
+		leftlist = list_mergesort(leftlist, f);
+		//printf("leftlist head %i leftlist tail %i\n", leftlist.list_head->value,leftlist.list_tail->value );
+		rightlist = list_mergesort(rightlist, f);
+		//printf("rightlist head %i rightlist tail %i\n", rightlist.list_head->value,rightlist.list_tail->value );
+		return list_merge(leftlist, rightlist, f);
+	}
+}
+
+
+	
